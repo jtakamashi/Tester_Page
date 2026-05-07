@@ -1,0 +1,633 @@
+<h2 class="sr-only">App educativa interativa que ensina iniciantes a investir em ETFs com perfil personalizado, simulador de juros compostos, comparação de cenários e biblioteca de conceitos.</h2>
+
+<style>
+.app{font-family:var(--font-sans);max-width:100%}
+.hero{background:var(--color-background-secondary);border-radius:var(--border-radius-xl);padding:1.5rem;margin-bottom:1.25rem;text-align:center}
+.hero-icon{width:48px;height:48px;border-radius:50%;background:var(--color-background-info);color:var(--color-text-info);display:inline-flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:10px}
+.hero h1{font-size:20px;font-weight:500;margin:0 0 6px}
+.hero p{font-size:13px;color:var(--color-text-secondary);margin:0;line-height:1.6}
+.progress-track{display:flex;gap:6px;margin:1rem 0 1.25rem;padding:0 4px}
+.progress-step{flex:1;height:4px;border-radius:2px;background:var(--color-border-tertiary);transition:background .3s}
+.progress-step.done{background:var(--color-text-info)}
+.progress-step.current{background:var(--color-text-primary)}
+.tabs{display:flex;gap:4px;border-bottom:0.5px solid var(--color-border-tertiary);margin-bottom:1.25rem;overflow-x:auto;padding-bottom:0}
+.tab{padding:10px 14px;font-size:13px;color:var(--color-text-secondary);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;background:none;border-top:none;border-left:none;border-right:none;display:flex;align-items:center;gap:6px}
+.tab.active{color:var(--color-text-primary);border-bottom-color:var(--color-text-primary);font-weight:500}
+.tab.locked{opacity:.4;cursor:not-allowed}
+.section{display:none}
+.section.active{display:block;animation:fade .35s ease}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:1.25rem;margin-bottom:1rem}
+.card h2{font-size:18px;font-weight:500;margin:0 0 6px;display:flex;align-items:center;gap:8px}
+.card h3{font-size:15px;font-weight:500;margin:1rem 0 8px}
+.card .lede{font-size:13px;color:var(--color-text-secondary);margin:0 0 1rem;line-height:1.6}
+.q-block{padding:1rem 0;border-top:0.5px solid var(--color-border-tertiary)}
+.q-block:first-of-type{border-top:none;padding-top:.25rem}
+.q-label{font-size:14px;font-weight:500;margin:0 0 4px}
+.q-help{font-size:12px;color:var(--color-text-tertiary);margin:0 0 12px;line-height:1.5}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}
+.opt{padding:12px 10px;font-size:13px;border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);background:var(--color-background-primary);cursor:pointer;text-align:left;color:var(--color-text-primary);display:flex;flex-direction:column;gap:4px}
+.opt:hover{background:var(--color-background-secondary)}
+.opt.selected{border:2px solid var(--color-border-info);background:var(--color-background-info);padding:11px 9px}
+.opt.selected .opt-title,.opt.selected .opt-sub{color:var(--color-text-info)}
+.opt-title{font-weight:500;font-size:13px}
+.opt-sub{font-size:11px;color:var(--color-text-secondary);line-height:1.4}
+.slider-row{display:flex;align-items:center;gap:12px;margin:8px 0}
+.slider-row label{font-size:13px;color:var(--color-text-secondary);min-width:90px}
+.slider-row input[type=range]{flex:1}
+.slider-row .out{font-size:14px;font-weight:500;min-width:80px;text-align:right}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin:1rem 0}
+.kpi{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:12px 14px}
+.kpi-label{font-size:12px;color:var(--color-text-secondary);margin:0 0 4px;display:flex;align-items:center;gap:4px}
+.kpi-value{font-size:22px;font-weight:500;margin:0}
+.kpi-value.success{color:var(--color-text-success)}
+.kpi-value.info{color:var(--color-text-info)}
+.kpi-sub{font-size:11px;color:var(--color-text-tertiary);margin:2px 0 0}
+.profile-banner{background:var(--color-background-info);border-radius:var(--border-radius-lg);padding:1rem 1.25rem;margin:1rem 0;display:flex;gap:14px;align-items:center}
+.profile-icon{width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.5);color:var(--color-text-info);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.profile-banner h3{margin:0 0 2px;font-size:15px;font-weight:500;color:var(--color-text-info)}
+.profile-banner p{margin:0;font-size:12px;color:var(--color-text-info);opacity:.85;line-height:1.5}
+.alloc-bar{display:flex;height:36px;border-radius:var(--border-radius-md);overflow:hidden;margin:14px 0 10px}
+.alloc-seg{display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;transition:flex .4s ease}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--color-text-secondary);margin-bottom:1rem}
+.legend-item{display:flex;align-items:center;gap:6px}
+.legend-dot{width:10px;height:10px;border-radius:2px}
+.etf-row{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;background:var(--color-background-secondary);border-radius:var(--border-radius-md);margin-bottom:6px;font-size:13px;gap:10px}
+.etf-row .name{font-weight:500;font-family:var(--font-mono);font-size:13px}
+.etf-row .desc{color:var(--color-text-secondary);font-size:12px;text-align:right;flex:1}
+.concept-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+.concept{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:14px;cursor:pointer;transition:border-color .2s}
+.concept:hover{border-color:var(--color-border-secondary)}
+.concept-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:8px}
+.concept h4{font-size:14px;font-weight:500;margin:0 0 4px}
+.concept p{font-size:12px;color:var(--color-text-secondary);margin:0;line-height:1.5}
+.steps{counter-reset:step}
+.step{display:flex;gap:14px;padding:14px 0;border-bottom:0.5px solid var(--color-border-tertiary);cursor:pointer;align-items:flex-start}
+.step:last-child{border-bottom:none}
+.step-num{width:32px;height:32px;border-radius:50%;background:var(--color-background-secondary);color:var(--color-text-primary);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;flex-shrink:0;border:0.5px solid var(--color-border-tertiary)}
+.step.done .step-num{background:var(--color-background-success);color:var(--color-text-success);border-color:transparent}
+.step-body{flex:1;min-width:0}
+.step-body h4{margin:0 0 4px;font-size:14px;font-weight:500;display:flex;align-items:center;gap:8px}
+.step-body p{margin:0 0 6px;font-size:13px;color:var(--color-text-secondary);line-height:1.5}
+.step-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.tag{padding:2px 8px;font-size:11px;border-radius:100px;background:var(--color-background-secondary);color:var(--color-text-secondary)}
+.tag.warn{background:var(--color-background-warning);color:var(--color-text-warning)}
+.tag.info{background:var(--color-background-info);color:var(--color-text-info)}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:1rem}
+.cta{display:inline-flex;align-items:center;gap:6px;padding:10px 14px;font-size:13px;font-weight:500;background:var(--color-text-primary);color:var(--color-background-primary);border:none;border-radius:var(--border-radius-md);cursor:pointer}
+.cta:hover{opacity:.85}
+.disclaimer{background:var(--color-background-warning);color:var(--color-text-warning);padding:12px 14px;border-radius:var(--border-radius-md);font-size:12px;line-height:1.5;display:flex;gap:10px;align-items:flex-start;margin:1rem 0}
+.disclaimer i{font-size:18px;flex-shrink:0;margin-top:1px}
+.toggle-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1rem}
+.toggle{padding:8px 12px;font-size:12px;border:0.5px solid var(--color-border-tertiary);border-radius:100px;background:var(--color-background-primary);cursor:pointer;color:var(--color-text-secondary)}
+.toggle.active{background:var(--color-text-primary);color:var(--color-background-primary);border-color:var(--color-text-primary)}
+.scenario-tip{font-size:12px;color:var(--color-text-secondary);font-style:italic;margin:6px 0 1rem;line-height:1.5}
+.coach-q{padding:12px 14px;font-size:13px;border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);background:var(--color-background-primary);cursor:pointer;text-align:left;color:var(--color-text-primary);display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%}
+.coach-q:hover{background:var(--color-background-secondary);border-color:var(--color-border-secondary)}
+.coach-q i{color:var(--color-text-secondary);font-size:14px;flex-shrink:0}
+.coach-cat{font-size:11px;color:var(--color-text-tertiary);margin:1rem 0 6px;text-transform:uppercase;letter-spacing:.5px}
+.coach-cat:first-child{margin-top:0}
+.glow{position:relative}
+.glow::after{content:'';position:absolute;inset:-2px;border-radius:inherit;border:2px solid var(--color-border-info);opacity:0;animation:glow 1.4s ease-out 1}
+@keyframes glow{0%{opacity:.8}100%{opacity:0}}
+.empty-state{text-align:center;padding:2rem 1rem;color:var(--color-text-secondary)}
+.empty-state i{font-size:36px;color:var(--color-text-tertiary);margin-bottom:8px;display:block}
+.empty-state p{margin:0;font-size:13px}
+</style>
+
+<div class="app">
+
+  <div class="hero">
+    <div class="hero-icon"><i class="ti ti-sparkles" aria-hidden="true"></i></div>
+    <h1>O teu coach pessoal de ETFs</h1>
+    <p>Aprende a investir em 5 passos guiados. Sem jargão, com simulações reais e adaptado ao teu perfil.</p>
+  </div>
+
+  <div class="progress-track" id="progress">
+    <div class="progress-step current"></div>
+    <div class="progress-step"></div>
+    <div class="progress-step"></div>
+    <div class="progress-step"></div>
+    <div class="progress-step"></div>
+  </div>
+
+  <div class="tabs" id="tabs">
+    <button class="tab active" data-tab="aprender"><i class="ti ti-book-2" aria-hidden="true"></i> Aprender</button>
+    <button class="tab" data-tab="perfil"><i class="ti ti-user-circle" aria-hidden="true"></i> Perfil</button>
+    <button class="tab" data-tab="portfolio"><i class="ti ti-chart-pie" aria-hidden="true"></i> Portfólio</button>
+    <button class="tab" data-tab="simulador"><i class="ti ti-trending-up" aria-hidden="true"></i> Simulador</button>
+    <button class="tab" data-tab="acao"><i class="ti ti-rocket" aria-hidden="true"></i> Ação</button>
+  </div>
+
+  <div id="sec-aprender" class="section active">
+    <div class="card">
+      <h2><i class="ti ti-bulb" style="color:var(--color-text-warning)" aria-hidden="true"></i> O que é um ETF?</h2>
+      <p class="lede">Imagina ir ao supermercado. Em vez de comprares uma única maçã (uma ação), levas um cabaz com 500 frutas diferentes. Se uma estragar, as outras compensam. Isto é um ETF.</p>
+
+      <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:1rem;margin:1rem 0">
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center">
+          <div>
+            <div style="width:36px;height:36px;border-radius:50%;background:#E1F5EE;color:#0F6E56;display:inline-flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:6px"><i class="ti ti-shopping-basket" aria-hidden="true"></i></div>
+            <div style="font-size:12px;font-weight:500">1 cabaz</div>
+            <div style="font-size:11px;color:var(--color-text-secondary)">Compras 1 ETF</div>
+          </div>
+          <div>
+            <div style="width:36px;height:36px;border-radius:50%;background:#EEEDFE;color:#3C3489;display:inline-flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:6px"><i class="ti ti-building-bank" aria-hidden="true"></i></div>
+            <div style="font-size:12px;font-weight:500">500+ empresas</div>
+            <div style="font-size:11px;color:var(--color-text-secondary)">Apple, Google...</div>
+          </div>
+          <div>
+            <div style="width:36px;height:36px;border-radius:50%;background:#FAEEDA;color:#854F0B;display:inline-flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:6px"><i class="ti ti-shield-check" aria-hidden="true"></i></div>
+            <div style="font-size:12px;font-weight:500">Diversificado</div>
+            <div style="font-size:11px;color:var(--color-text-secondary)">Risco diluído</div>
+          </div>
+        </div>
+      </div>
+
+      <h3>ETF vs Ações vs Fundos</h3>
+      <div style="display:grid;gap:6px;margin-top:8px">
+        <div style="display:grid;grid-template-columns:90px 1fr;gap:10px;padding:10px;background:var(--color-background-secondary);border-radius:var(--border-radius-md);font-size:12px">
+          <div style="font-weight:500"><i class="ti ti-coin" aria-hidden="true"></i> Ação</div>
+          <div style="color:var(--color-text-secondary);line-height:1.5">Pedacinho de <em>uma</em> empresa. Risco concentrado: se essa empresa cair, perdes muito.</div>
+        </div>
+        <div style="display:grid;grid-template-columns:90px 1fr;gap:10px;padding:10px;background:var(--color-background-info);border-radius:var(--border-radius-md);font-size:12px">
+          <div style="font-weight:500;color:var(--color-text-info)"><i class="ti ti-chart-donut" aria-hidden="true"></i> ETF</div>
+          <div style="color:var(--color-text-info);line-height:1.5">Cabaz de <em>centenas</em> de empresas. Comissões muito baixas (0,07–0,30%/ano). Compras como uma ação na bolsa.</div>
+        </div>
+        <div style="display:grid;grid-template-columns:90px 1fr;gap:10px;padding:10px;background:var(--color-background-secondary);border-radius:var(--border-radius-md);font-size:12px">
+          <div style="font-weight:500"><i class="ti ti-briefcase" aria-hidden="true"></i> Fundo</div>
+          <div style="color:var(--color-text-secondary);line-height:1.5">Cabaz gerido por humanos. Comissões altas (1–3%/ano) que comem os teus retornos.</div>
+        </div>
+      </div>
+
+      <h3>Conceitos-chave (toca para aprofundar)</h3>
+      <div class="concept-grid">
+        <div class="concept" onclick="sendPrompt('Explica-me em detalhe o que é o TER de um ETF e como impacta os meus retornos a longo prazo, com um exemplo numérico.')">
+          <div class="concept-icon" style="background:#E6F1FB;color:#185FA5"><i class="ti ti-receipt-tax" aria-hidden="true"></i></div>
+          <h4>TER (custo anual)</h4>
+          <p>Quanto o ETF te cobra por ano. Quanto menor, melhor.</p>
+        </div>
+        <div class="concept" onclick="sendPrompt('Qual a diferença entre ETF de acumulação e de distribuição? Qual é melhor para Portugal?')">
+          <div class="concept-icon" style="background:#EEEDFE;color:#3C3489"><i class="ti ti-arrows-shuffle" aria-hidden="true"></i></div>
+          <h4>Acumulação vs Distribuição</h4>
+          <p>Reinvestir dividendos ou recebê-los na conta.</p>
+        </div>
+        <div class="concept" onclick="sendPrompt('O que é UCITS num ETF e porque é importante para investidores europeus?')">
+          <div class="concept-icon" style="background:#E1F5EE;color:#0F6E56"><i class="ti ti-stamp" aria-hidden="true"></i></div>
+          <h4>UCITS</h4>
+          <p>Selo europeu de proteção do investidor.</p>
+        </div>
+        <div class="concept" onclick="sendPrompt('O que é tracking error num ETF e como avalio se um ETF segue bem o índice?')">
+          <div class="concept-icon" style="background:#FAEEDA;color:#854F0B"><i class="ti ti-target" aria-hidden="true"></i></div>
+          <h4>Tracking error</h4>
+          <p>Quão fielmente o ETF segue o índice.</p>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="cta" onclick="goTab('perfil')">Próximo passo: o teu perfil <i class="ti ti-arrow-right" aria-hidden="true"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <div id="sec-perfil" class="section">
+    <div class="card">
+      <h2><i class="ti ti-user-circle" style="color:var(--color-text-info)" aria-hidden="true"></i> Conhece-te como investidor</h2>
+      <p class="lede">Não há perfil "certo" ou "errado" — só o que se ajusta a ti. Responde com honestidade.</p>
+
+      <div class="q-block">
+        <p class="q-label">Que conhecimento tens sobre investimentos?</p>
+        <p class="q-help">Sê sincero — começar do zero é perfeitamente normal.</p>
+        <div class="opts" data-q="conhecimento">
+          <button class="opt" data-val="iniciante"><span class="opt-title">Nenhum</span><span class="opt-sub">Estou a começar agora</span></button>
+          <button class="opt" data-val="basico"><span class="opt-title">Básico</span><span class="opt-sub">Já ouvi falar mas nunca investi</span></button>
+          <button class="opt" data-val="intermedio"><span class="opt-title">Já invisto</span><span class="opt-sub">Quero otimizar a estratégia</span></button>
+        </div>
+      </div>
+
+      <div class="q-block">
+        <p class="q-label">Quando vais precisar deste dinheiro?</p>
+        <p class="q-help">O horizonte temporal é o fator mais importante na escolha da estratégia.</p>
+        <div class="opts" data-q="horizonte">
+          <button class="opt" data-val="curto"><span class="opt-title">0 – 2 anos</span><span class="opt-sub">Curto prazo</span></button>
+          <button class="opt" data-val="medio"><span class="opt-title">3 – 7 anos</span><span class="opt-sub">Médio prazo</span></button>
+          <button class="opt" data-val="longo"><span class="opt-title">8+ anos</span><span class="opt-sub">Longo prazo</span></button>
+        </div>
+      </div>
+
+      <div class="q-block">
+        <p class="q-label">Como reagirias a uma queda de 20%?</p>
+        <p class="q-help">Imagina que investiste 1 000 € e em 6 meses passou para 800 €. O que farias?</p>
+        <div class="opts" data-q="risco">
+          <button class="opt" data-val="baixa"><span class="opt-title">Vendia logo</span><span class="opt-sub">Risco baixo</span></button>
+          <button class="opt" data-val="media"><span class="opt-title">Aguentava</span><span class="opt-sub">Risco médio</span></button>
+          <button class="opt" data-val="alta"><span class="opt-title">Comprava mais</span><span class="opt-sub">Risco alto</span></button>
+        </div>
+      </div>
+
+      <div class="q-block">
+        <p class="q-label">Quanto podes investir por mês?</p>
+        <p class="q-help">A consistência vale mais que o valor. 25 €/mês durante 30 anos batem 500 € num ano.</p>
+        <div class="slider-row">
+          <input type="range" id="valor-mes" min="10" max="500" step="10" value="50" />
+          <span class="out" id="valor-out">50 €</span>
+        </div>
+      </div>
+
+      <div id="perfil-resultado" style="display:none">
+        <div class="profile-banner glow">
+          <div class="profile-icon"><i id="perfil-icon" class="ti ti-user" aria-hidden="true"></i></div>
+          <div style="min-width:0">
+            <h3 id="perfil-tipo">—</h3>
+            <p id="perfil-desc">—</p>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="cta" onclick="goTab('portfolio')">Ver portfólio sugerido <i class="ti ti-arrow-right" aria-hidden="true"></i></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="sec-portfolio" class="section">
+    <div class="card">
+      <h2><i class="ti ti-chart-pie" style="color:var(--color-text-success)" aria-hidden="true"></i> A tua alocação</h2>
+      <p class="lede" id="port-lede">Completa o teu perfil primeiro para ver uma alocação personalizada.</p>
+
+      <div id="port-empty" class="empty-state">
+        <i class="ti ti-arrow-left" aria-hidden="true"></i>
+        <p>Vai ao separador <em>Perfil</em> para começar.</p>
+      </div>
+
+      <div id="port-content" style="display:none">
+        <div class="alloc-bar" id="alloc-bar"></div>
+        <div class="legend" id="alloc-legend"></div>
+
+        <h3>Porque esta mistura?</h3>
+        <p id="port-rationale" style="font-size:13px;color:var(--color-text-secondary);line-height:1.6;margin:0 0 1rem"></p>
+
+        <h3>ETFs comuns nesta categoria</h3>
+        <div id="port-etfs"></div>
+
+        <div class="disclaimer">
+          <i class="ti ti-info-circle" aria-hidden="true"></i>
+          <div>Estes nomes são apenas exemplos populares na Europa para fins educativos — não são recomendação de compra. Pesquisa sempre o TER, domicílio (Irlanda é eficiente para PT), e disponibilidade na corretora antes de investir.</div>
+        </div>
+
+        <div class="btn-row">
+          <button class="cta" onclick="goTab('simulador')">Simular crescimento <i class="ti ti-arrow-right" aria-hidden="true"></i></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="sec-simulador" class="section">
+    <div class="card">
+      <h2><i class="ti ti-trending-up" style="color:var(--color-text-info)" aria-hidden="true"></i> O poder dos juros compostos</h2>
+      <p class="lede">Albert Einstein chamou aos juros compostos "a oitava maravilha do mundo". Brinca com os sliders e vê porquê.</p>
+
+      <div class="toggle-row">
+        <button class="toggle active" data-scenario="default">O teu plano</button>
+        <button class="toggle" data-scenario="conservative">Conservador (4%)</button>
+        <button class="toggle" data-scenario="historical">S&amp;P 500 hist. (8%)</button>
+        <button class="toggle" data-scenario="agressive">Otimista (10%)</button>
+      </div>
+      <p class="scenario-tip" id="scenario-tip">Edita os valores manualmente ou usa um cenário pré-definido.</p>
+
+      <div class="slider-row">
+        <label><i class="ti ti-cash" aria-hidden="true"></i> Mensal</label>
+        <input type="range" id="s-mes" min="10" max="500" step="10" value="50" />
+        <span class="out" id="s-mes-out">50 €</span>
+      </div>
+      <div class="slider-row">
+        <label><i class="ti ti-calendar" aria-hidden="true"></i> Anos</label>
+        <input type="range" id="s-anos" min="1" max="40" step="1" value="20" />
+        <span class="out" id="s-anos-out">20 anos</span>
+      </div>
+      <div class="slider-row">
+        <label><i class="ti ti-percentage" aria-hidden="true"></i> Retorno</label>
+        <input type="range" id="s-retorno" min="2" max="10" step="0.5" value="7" />
+        <span class="out" id="s-retorno-out">7,0%</span>
+      </div>
+
+      <div class="kpi-grid">
+        <div class="kpi"><p class="kpi-label"><i class="ti ti-wallet" aria-hidden="true"></i> Investido</p><p class="kpi-value" id="s-investido">12 000 €</p><p class="kpi-sub">do teu bolso</p></div>
+        <div class="kpi"><p class="kpi-label"><i class="ti ti-coin" aria-hidden="true"></i> Valor final</p><p class="kpi-value success" id="s-final">26 005 €</p><p class="kpi-sub">estimado</p></div>
+        <div class="kpi"><p class="kpi-label"><i class="ti ti-arrow-up-right" aria-hidden="true"></i> Lucro</p><p class="kpi-value info" id="s-lucro">14 005 €</p><p class="kpi-sub" id="s-lucro-pct">+117%</p></div>
+        <div class="kpi"><p class="kpi-label"><i class="ti ti-x" aria-hidden="true"></i> Multiplicador</p><p class="kpi-value" id="s-mult">2,2×</p><p class="kpi-sub">o teu dinheiro</p></div>
+      </div>
+
+      <div style="position:relative;width:100%;height:240px;margin-top:1rem">
+        <canvas id="s-chart" role="img" aria-label="Gráfico de área comparando dinheiro investido versus valor total ao longo dos anos.">Gráfico de evolução do investimento.</canvas>
+      </div>
+
+      <div style="margin-top:1.25rem;padding:12px 14px;background:var(--color-background-info);border-radius:var(--border-radius-md);font-size:12px;color:var(--color-text-info);line-height:1.6" id="lesson-box">
+        <strong>Lição:</strong> <span id="lesson-text">A maior parte do teu património virá dos juros, não do que poupaste. Por isso é tão importante começar cedo.</span>
+      </div>
+
+      <div class="btn-row">
+        <button class="cta" onclick="goTab('acao')">Como começar agora <i class="ti ti-arrow-right" aria-hidden="true"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <div id="sec-acao" class="section">
+    <div class="card">
+      <h2><i class="ti ti-rocket" style="color:var(--color-text-success)" aria-hidden="true"></i> Plano de ação em 6 passos</h2>
+      <p class="lede">Toca em cada passo para o marcar como feito. Vai ao teu ritmo.</p>
+      <div class="steps" id="steps-list"></div>
+    </div>
+
+    <div class="card">
+      <h2><i class="ti ti-message-circle" aria-hidden="true"></i> Pergunta ao coach</h2>
+      <p class="lede">Toca numa pergunta para resposta detalhada.</p>
+
+      <p class="coach-cat">Primeiros passos</p>
+      <div style="display:grid;gap:6px">
+        <button class="coach-q" onclick="sendPrompt('Como abrir conta numa corretora em Portugal? Compara Trading 212, Degiro e XTB.')"><span>Como escolher e abrir conta numa corretora?</span><i class="ti ti-arrow-up-right" aria-hidden="true"></i></button>
+        <button class="coach-q" onclick="sendPrompt('Como funcionam os impostos sobre ETFs em Portugal? Explica o regime fiscal e a importância do domicílio do ETF.')"><span>Como funcionam os impostos em Portugal?</span><i class="ti ti-arrow-up-right" aria-hidden="true"></i></button>
+        <button class="coach-q" onclick="sendPrompt('Devo investir tudo de uma vez (lump sum) ou aos poucos (DCA)? Quais as vantagens de cada estratégia?')"><span>Lump sum ou DCA — qual é melhor?</span><i class="ti ti-arrow-up-right" aria-hidden="true"></i></button>
+      </div>
+
+      <p class="coach-cat">Decisões importantes</p>
+      <div style="display:grid;gap:6px">
+        <button class="coach-q" onclick="sendPrompt('Compara em detalhe os ETFs VWCE, IWDA+EIMI e CSPX. Qual escolher e porquê?')"><span>VWCE, IWDA ou CSPX?</span><i class="ti ti-arrow-up-right" aria-hidden="true"></i></button>
+        <button class="coach-q" onclick="sendPrompt('O que é rebalanceamento de portfólio e quando devo fazê-lo? Dá-me um exemplo prático.')"><span>O que é rebalanceamento?</span><i class="ti ti-arrow-up-right" aria-hidden="true"></i></button>
+        <button class="coach-q" onclick="sendPrompt('O que devo fazer se o mercado cair 30%? Como gerir o medo e o pânico em momentos de crise?')"><span>E se o mercado cair 30%?</span><i class="ti ti-arrow-up-right" aria-hidden="true"></i></button>
+      </div>
+
+      <p class="coach-cat">Conceitos avançados</p>
+      <div style="display:grid;gap:6px">
+        <button class="coach-q" onclick="sendPrompt('Explica-me o efeito dos juros compostos com 3 exemplos práticos diferentes (curto, médio e longo prazo).')"><span>Como funcionam os juros compostos?</span><i class="ti ti-arrow-up-right" aria-hidden="true"></i></button>
+        <button class="coach-q" onclick="sendPrompt('Quais os erros mais comuns de investidores iniciantes em ETFs e como evitá-los?')"><span>Que erros devo evitar?</span><i class="ti ti-arrow-up-right" aria-hidden="true"></i></button>
+      </div>
+    </div>
+
+    <div class="disclaimer">
+      <i class="ti ti-alert-triangle" aria-hidden="true"></i>
+      <div>Esta app é educativa e não substitui consultoria financeira profissional. Investir envolve risco de perda de capital. Rentabilidades passadas não garantem resultados futuros.</div>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+(function(){
+  const state = {
+    conhecimento:null, horizonte:null, risco:null, valorMes:50,
+    roadmap:[false,false,false,false,false,false],
+    activeTab:'aprender'
+  };
+  const tabOrder = ['aprender','perfil','portfolio','simulador','acao'];
+
+  function updateProgress(){
+    const idx = tabOrder.indexOf(state.activeTab);
+    document.querySelectorAll('.progress-step').forEach((s,i)=>{
+      s.classList.remove('done','current');
+      if(i<idx) s.classList.add('done');
+      if(i===idx) s.classList.add('current');
+    });
+  }
+
+  function goTab(name){
+    state.activeTab=name;
+    document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===name));
+    document.querySelectorAll('.section').forEach(s=>s.classList.toggle('active',s.id==='sec-'+name));
+    updateProgress();
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+  window.goTab=goTab;
+  document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>goTab(t.dataset.tab)));
+
+  document.querySelectorAll('.opts').forEach(group=>{
+    group.addEventListener('click',e=>{
+      const btn=e.target.closest('.opt'); if(!btn) return;
+      const q=group.dataset.q;
+      group.querySelectorAll('.opt').forEach(o=>o.classList.remove('selected'));
+      btn.classList.add('selected');
+      state[q]=btn.dataset.val;
+      checkPerfil();
+    });
+  });
+
+  const valorMes=document.getElementById('valor-mes');
+  const valorOut=document.getElementById('valor-out');
+  valorMes.addEventListener('input',()=>{
+    state.valorMes=parseInt(valorMes.value);
+    valorOut.textContent=state.valorMes+' €';
+    document.getElementById('s-mes').value=state.valorMes;
+    document.getElementById('s-mes-out').textContent=state.valorMes+' €';
+    updateSim();
+    checkPerfil();
+  });
+
+  const profiles = {
+    'conservador':{label:'Perfil Conservador',icon:'ti-shield',desc:'Curto prazo + foco em preservar o capital. Pouca volatilidade, retornos modestos mas estáveis.'},
+    'cauteloso':{label:'Perfil Cauteloso',icon:'ti-anchor',desc:'Equilíbrio com forte preferência por estabilidade. Mais obrigações que ações.'},
+    'equilibrado':{label:'Perfil Equilibrado',icon:'ti-scale',desc:'Médio prazo com mistura clássica 60/40. Equilibra crescimento e proteção.'},
+    'equilibrado-longo':{label:'Crescimento Moderado',icon:'ti-plant',desc:'Longo prazo com prudência: maioria em ações, com almofada de obrigações.'},
+    'crescimento':{label:'Perfil de Crescimento',icon:'ti-rocket',desc:'Longo prazo agressivo: 100% ações, foco em maximizar o efeito composto.'}
+  };
+
+  function getTipo(){
+    if(state.horizonte==='curto') return 'conservador';
+    if(state.horizonte==='longo' && state.risco==='alta') return 'crescimento';
+    if(state.horizonte==='longo') return 'equilibrado-longo';
+    if(state.risco==='baixa') return 'cauteloso';
+    return 'equilibrado';
+  }
+
+  function checkPerfil(){
+    if(state.conhecimento && state.horizonte && state.risco){
+      const key=getTipo();
+      const p=profiles[key];
+      const icon=document.getElementById('perfil-icon');
+      icon.className='ti '+p.icon;
+      document.getElementById('perfil-tipo').textContent=p.label;
+      document.getElementById('perfil-desc').textContent=p.desc;
+      const res=document.getElementById('perfil-resultado');
+      res.style.display='block';
+      res.querySelector('.glow').classList.remove('glow');
+      void res.offsetWidth;
+      res.querySelector('.profile-banner').classList.add('glow');
+      renderPortfolio();
+    }
+  }
+
+  const portfolios={
+    'conservador':{
+      rationale:'Em horizonte curto (<2 anos), o mercado de ações pode estar em queda no exato momento em que precisas do dinheiro. Por isso, foca-se em ativos quase sem volatilidade.',
+      aloc:[{nome:'Mercado monetário',pct:60,cor:'#378ADD'},{nome:'Obrigações curto prazo',pct:30,cor:'#85B7EB'},{nome:'Ações globais',pct:10,cor:'#1D9E75'}],
+      etfs:[{nome:'XEON',desc:'Mercado monetário euro'},{nome:'IB01',desc:'Treasuries USA 0–1 ano'}]
+    },
+    'cauteloso':{
+      rationale:'Tens tempo, mas preferes estabilidade. As obrigações reduzem oscilações drásticas, enquanto a parte de ações captura crescimento.',
+      aloc:[{nome:'Obrigações globais',pct:60,cor:'#378ADD'},{nome:'Ações globais',pct:40,cor:'#1D9E75'}],
+      etfs:[{nome:'AGGH',desc:'Obrigações globais agregadas'},{nome:'VWCE',desc:'Ações mundo (FTSE All-World)'}]
+    },
+    'equilibrado':{
+      rationale:'A clássica mistura 60/40 — referência mundial há décadas. Em anos bons as ações puxam, em anos maus as obrigações amortecem.',
+      aloc:[{nome:'Ações globais',pct:60,cor:'#1D9E75'},{nome:'Obrigações globais',pct:40,cor:'#378ADD'}],
+      etfs:[{nome:'VWCE',desc:'Ações mundo'},{nome:'AGGH',desc:'Obrigações globais'}]
+    },
+    'equilibrado-longo':{
+      rationale:'Com 8+ anos, podes assumir mais risco em ações sem perder o sono. A pequena fatia de obrigações dá flexibilidade para rebalancear quando o mercado cai.',
+      aloc:[{nome:'Ações globais',pct:80,cor:'#1D9E75'},{nome:'Obrigações globais',pct:20,cor:'#378ADD'}],
+      etfs:[{nome:'VWCE',desc:'Ações mundo (acumulação)'},{nome:'IWDA',desc:'MSCI World'},{nome:'AGGH',desc:'Obrigações globais'}]
+    },
+    'crescimento':{
+      rationale:'Horizonte longo + tolerância alta = máximo crescimento. Sem obrigações para não diluir retornos. As quedas no caminho são oportunidades de compra.',
+      aloc:[{nome:'Ações globais',pct:100,cor:'#1D9E75'}],
+      etfs:[{nome:'VWCE',desc:'Ações mundo (FTSE All-World)'},{nome:'IWDA + EIMI',desc:'Desenvolvidos + emergentes (88/12)'},{nome:'CSPX',desc:'S&P 500 (acumulação)'}]
+    }
+  };
+
+  function renderPortfolio(){
+    const key=getTipo();
+    const p=portfolios[key];
+    document.getElementById('port-empty').style.display='none';
+    document.getElementById('port-content').style.display='block';
+    document.getElementById('port-lede').textContent='Com base no teu perfil '+profiles[key].label.replace('Perfil ','').toLowerCase()+', aqui está uma alocação sugerida.';
+    document.getElementById('port-rationale').textContent=p.rationale;
+
+    const bar=document.getElementById('alloc-bar'); bar.innerHTML='';
+    const legend=document.getElementById('alloc-legend'); legend.innerHTML='';
+    p.aloc.forEach(a=>{
+      const seg=document.createElement('div');
+      seg.className='alloc-seg';
+      const textColor=a.cor==='#1D9E75'?'#04342C':a.cor==='#378ADD'?'#042C53':'#0C447C';
+      seg.style.cssText='background:'+a.cor+';flex:'+a.pct+';color:'+(a.pct>=15?'white':'transparent');
+      seg.textContent=a.pct+'%';
+      bar.appendChild(seg);
+      const li=document.createElement('span');
+      li.className='legend-item';
+      li.innerHTML='<span class="legend-dot" style="background:'+a.cor+'"></span>'+a.nome+' · '+a.pct+'%';
+      legend.appendChild(li);
+    });
+
+    const etfsDiv=document.getElementById('port-etfs'); etfsDiv.innerHTML='';
+    p.etfs.forEach(e=>{
+      const row=document.createElement('div');
+      row.className='etf-row';
+      row.innerHTML='<span class="name">'+e.nome+'</span><span class="desc">'+e.desc+'</span>';
+      etfsDiv.appendChild(row);
+    });
+  }
+
+  let chart=null;
+  const fmt=n=>Math.round(n).toLocaleString('pt-PT')+' €';
+  const lessons={
+    short:'Em horizontes curtos, os juros compostos quase não atuam. O que conta é mesmo o que poupas.',
+    medium:'A meio prazo, os juros começam a ganhar protagonismo — entre 30% e 50% do total final.',
+    long:'A longo prazo, mais de metade do teu património vem dos juros, não das contribuições. Tempo é o teu melhor amigo.',
+    veryLong:'Acima de 25 anos, os juros tipicamente ultrapassam as contribuições em 2 a 4 vezes. Por isso começar cedo é tão poderoso.'
+  };
+
+  function updateSim(){
+    const m=parseInt(document.getElementById('s-mes').value);
+    const a=parseInt(document.getElementById('s-anos').value);
+    const r=parseFloat(document.getElementById('s-retorno').value);
+    document.getElementById('s-mes-out').textContent=m+' €';
+    document.getElementById('s-anos-out').textContent=a+(a===1?' ano':' anos');
+    document.getElementById('s-retorno-out').textContent=r.toFixed(1).replace('.',',')+'%';
+
+    const monthlyR=r/100/12;
+    const months=a*12;
+    const investido=m*months;
+    let final=0;
+    const labels=[]; const investedSeries=[]; const finalSeries=[];
+    for(let i=1;i<=months;i++){
+      final=(final+m)*(1+monthlyR);
+      if(i%12===0){
+        labels.push('Ano '+(i/12));
+        investedSeries.push(Math.round(m*i));
+        finalSeries.push(Math.round(final));
+      }
+    }
+    final=Math.round(final);
+    const lucro=final-investido;
+    const pct=Math.round(lucro/investido*100);
+    document.getElementById('s-investido').textContent=fmt(investido);
+    document.getElementById('s-final').textContent=fmt(final);
+    document.getElementById('s-lucro').textContent=fmt(lucro);
+    document.getElementById('s-lucro-pct').textContent=(lucro>=0?'+':'')+pct+'%';
+    document.getElementById('s-mult').textContent=(final/investido).toFixed(1).replace('.',',')+'×';
+
+    let lesson=lessons.short;
+    if(a>=25) lesson=lessons.veryLong;
+    else if(a>=10) lesson=lessons.long;
+    else if(a>=5) lesson=lessons.medium;
+    document.getElementById('lesson-text').textContent=lesson;
+
+    if(chart) chart.destroy();
+    const ctx=document.getElementById('s-chart');
+    if(!ctx) return;
+    chart=new Chart(ctx,{
+      type:'line',
+      data:{labels,datasets:[
+        {label:'Investido',data:investedSeries,borderColor:'#888780',backgroundColor:'rgba(136,135,128,0.18)',fill:true,tension:.35,pointRadius:0,borderWidth:2,borderDash:[4,4]},
+        {label:'Valor total',data:finalSeries,borderColor:'#1D9E75',backgroundColor:'rgba(29,158,117,0.22)',fill:true,tension:.35,pointRadius:0,borderWidth:2}
+      ]},
+      options:{
+        responsive:true,maintainAspectRatio:false,
+        interaction:{mode:'index',intersect:false},
+        plugins:{
+          legend:{position:'bottom',labels:{font:{size:11},boxWidth:14,boxHeight:3,usePointStyle:false}},
+          tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmt(c.parsed.y)}}
+        },
+        scales:{
+          x:{grid:{display:false},ticks:{font:{size:10},maxTicksLimit:8}},
+          y:{grid:{color:'rgba(128,128,128,0.08)'},ticks:{font:{size:10},callback:v=>(v>=1000?Math.round(v/1000)+'k':v)+' €'}}
+        }
+      }
+    });
+  }
+  ['s-mes','s-anos','s-retorno'].forEach(id=>document.getElementById(id).addEventListener('input',updateSim));
+
+  const scenarios={
+    'default':{tip:'Edita os valores manualmente para o teu plano.'},
+    'conservative':{retorno:4,tip:'Cenário conservador: típico de um portfólio com muitas obrigações.'},
+    'historical':{retorno:8,tip:'Cenário baseado na média histórica do S&P 500 nos últimos 100 anos (≈ 7-10% anual).'},
+    'agressive':{retorno:10,tip:'Cenário otimista: possível mas raramente sustentado durante décadas.'}
+  };
+  document.querySelectorAll('.toggle').forEach(b=>{
+    b.addEventListener('click',()=>{
+      document.querySelectorAll('.toggle').forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');
+      const sc=scenarios[b.dataset.scenario];
+      document.getElementById('scenario-tip').textContent=sc.tip;
+      if(sc.retorno){
+        document.getElementById('s-retorno').value=sc.retorno;
+        updateSim();
+      }
+    });
+  });
+
+  const steps=[
+    {t:'Construir fundo de emergência',d:'3 meses de despesas numa conta separada antes de começar. É a tua almofada — sem isto, qualquer imprevisto obriga-te a vender em prejuízo.',tags:['Crítico']},
+    {t:'Pagar dívidas caras',d:'Cartões de crédito ou créditos pessoais com juros >8% comem qualquer retorno. Paga primeiro, investe depois.',tags:['Antes de tudo']},
+    {t:'Escolher uma corretora',d:'Compara comissões, fiabilidade e ETFs disponíveis. Trading 212, Degiro e XTB são populares em Portugal.',tags:['Pesquisa']},
+    {t:'Comprar o teu primeiro ETF',d:'Começa pequeno (mesmo que sejam 25 €). Um ETF global como VWCE é um ponto de partida comum para iniciantes.',tags:['Aprender fazendo']},
+    {t:'Automatizar o DCA',d:'Configura compras mensais automáticas. Remove emoção da equação — o teu eu de daqui a 10 anos vai agradecer.',tags:['Automatizar']},
+    {t:'Rever 1 vez por ano',d:'Confere se a alocação ainda corresponde ao teu perfil e rebalanceia se necessário. Mais que isso é over-trading.',tags:['Manutenção']}
+  ];
+
+  function renderSteps(){
+    const list=document.getElementById('steps-list'); list.innerHTML='';
+    steps.forEach((s,i)=>{
+      const div=document.createElement('div');
+      div.className='step'+(state.roadmap[i]?' done':'');
+      const icon=state.roadmap[i]?'<i class="ti ti-check" aria-hidden="true"></i>':(i+1);
+      const tags=s.tags.map(t=>'<span class="tag">'+t+'</span>').join('');
+      div.innerHTML='<div class="step-num">'+icon+'</div><div class="step-body"><h4>'+s.t+'</h4><p>'+s.d+'</p><div class="step-tags">'+tags+'</div></div>';
+      div.addEventListener('click',()=>{state.roadmap[i]=!state.roadmap[i];renderSteps();});
+      list.appendChild(div);
+    });
+  }
+
+  updateSim();
+  renderSteps();
+  updateProgress();
+})();
+</script>
