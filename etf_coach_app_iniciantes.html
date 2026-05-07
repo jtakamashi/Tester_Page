@@ -1,0 +1,468 @@
+<h2 class="sr-only">App interativa de coaching para iniciantes em ETFs com perfil, portfólio sugerido, simulador de DCA e roadmap.</h2>
+
+<style>
+.etf-app { font-family: var(--font-sans); max-width: 100%; }
+.etf-tabs { display: flex; gap: 4px; border-bottom: 0.5px solid var(--color-border-tertiary); margin-bottom: 1.25rem; overflow-x: auto; }
+.etf-tab { padding: 10px 14px; font-size: 13px; color: var(--color-text-secondary); cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; background: none; border-top: none; border-left: none; border-right: none; }
+.etf-tab.active { color: var(--color-text-primary); border-bottom-color: var(--color-text-primary); font-weight: 500; }
+.etf-card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1.25rem; margin-bottom: 1rem; }
+.etf-metric { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 0.875rem 1rem; }
+.etf-metric-label { font-size: 12px; color: var(--color-text-secondary); margin: 0 0 4px; }
+.etf-metric-value { font-size: 22px; font-weight: 500; margin: 0; color: var(--color-text-primary); }
+.etf-grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+.etf-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.etf-row label { font-size: 13px; color: var(--color-text-secondary); min-width: 110px; }
+.etf-row input[type="range"] { flex: 1; }
+.etf-row .out { font-size: 14px; font-weight: 500; min-width: 80px; text-align: right; }
+.etf-q { margin-bottom: 1rem; }
+.etf-q-label { font-size: 14px; font-weight: 500; margin: 0 0 8px; color: var(--color-text-primary); }
+.etf-options { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 6px; }
+.etf-opt { padding: 10px; font-size: 13px; border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); background: var(--color-background-primary); cursor: pointer; text-align: center; color: var(--color-text-primary); }
+.etf-opt:hover { background: var(--color-background-secondary); }
+.etf-opt.selected { border: 2px solid var(--color-border-info); background: var(--color-background-info); color: var(--color-text-info); padding: 9px; }
+.etf-bar { display: flex; height: 28px; border-radius: var(--border-radius-md); overflow: hidden; margin: 12px 0; }
+.etf-bar-seg { display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; color: white; }
+.etf-legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--color-text-secondary); }
+.etf-legend-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
+.etf-step { display: flex; gap: 12px; padding: 10px 0; border-bottom: 0.5px solid var(--color-border-tertiary); }
+.etf-step:last-child { border-bottom: none; }
+.etf-step-num { width: 28px; height: 28px; border-radius: 50%; background: var(--color-background-info); color: var(--color-text-info); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 500; flex-shrink: 0; }
+.etf-step-content h4 { margin: 0 0 2px; font-size: 14px; font-weight: 500; }
+.etf-step-content p { margin: 0; font-size: 13px; color: var(--color-text-secondary); line-height: 1.5; }
+.etf-chip { display: inline-block; padding: 3px 10px; font-size: 11px; border-radius: 100px; margin: 2px 4px 2px 0; }
+.etf-chip-info { background: var(--color-background-info); color: var(--color-text-info); }
+.etf-chip-success { background: var(--color-background-success); color: var(--color-text-success); }
+.etf-chip-warning { background: var(--color-background-warning); color: var(--color-text-warning); }
+.etf-action-btn { padding: 8px 14px; font-size: 13px; cursor: pointer; }
+.etf-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 1rem; }
+.etf-hidden { display: none !important; }
+.etf-hint { font-size: 12px; color: var(--color-text-tertiary); margin: 4px 0 0; line-height: 1.5; }
+.etf-section-title { font-size: 14px; font-weight: 500; margin: 0 0 10px; color: var(--color-text-primary); }
+.etf-disclaimer { background: var(--color-background-warning); color: var(--color-text-warning); padding: 10px 12px; border-radius: var(--border-radius-md); font-size: 12px; margin-top: 1rem; line-height: 1.5; }
+</style>
+
+<div class="etf-app">
+  <div class="etf-tabs" id="tabs">
+    <button class="etf-tab active" data-tab="perfil"><i class="ti ti-user" aria-hidden="true"></i> Perfil</button>
+    <button class="etf-tab" data-tab="portfolio"><i class="ti ti-chart-pie" aria-hidden="true"></i> Portfólio</button>
+    <button class="etf-tab" data-tab="simulador"><i class="ti ti-trending-up" aria-hidden="true"></i> Simulador</button>
+    <button class="etf-tab" data-tab="roadmap"><i class="ti ti-map-2" aria-hidden="true"></i> Roadmap</button>
+    <button class="etf-tab" data-tab="coach"><i class="ti ti-message-circle" aria-hidden="true"></i> Coach</button>
+  </div>
+
+  <!-- TAB: PERFIL -->
+  <div id="tab-perfil" class="etf-tab-content">
+    <div class="etf-card">
+      <p class="etf-section-title">Vamos conhecer-te</p>
+      <p class="etf-hint">Responde a 4 perguntas rápidas para receberes uma sugestão personalizada.</p>
+
+      <div class="etf-q" style="margin-top: 1rem;">
+        <p class="etf-q-label">1. Que conhecimento tens sobre investimentos?</p>
+        <div class="etf-options" data-q="conhecimento">
+          <button class="etf-opt" data-val="iniciante">Nenhum</button>
+          <button class="etf-opt" data-val="basico">Básico</button>
+          <button class="etf-opt" data-val="intermedio">Já invisto</button>
+        </div>
+      </div>
+
+      <div class="etf-q">
+        <p class="etf-q-label">2. Para quando precisas do dinheiro?</p>
+        <div class="etf-options" data-q="horizonte">
+          <button class="etf-opt" data-val="curto">0–2 anos</button>
+          <button class="etf-opt" data-val="medio">3–7 anos</button>
+          <button class="etf-opt" data-val="longo">8+ anos</button>
+        </div>
+      </div>
+
+      <div class="etf-q">
+        <p class="etf-q-label">3. Como reagirias se o teu investimento caísse 20%?</p>
+        <div class="etf-options" data-q="risco">
+          <button class="etf-opt" data-val="baixa">Vendia logo</button>
+          <button class="etf-opt" data-val="media">Aguentava</button>
+          <button class="etf-opt" data-val="alta">Comprava mais</button>
+        </div>
+      </div>
+
+      <div class="etf-q">
+        <p class="etf-q-label">4. Quanto podes investir por mês?</p>
+        <div class="etf-row" style="margin-top: 8px;">
+          <input type="range" id="valor-mes" min="10" max="500" step="10" value="50" />
+          <span class="out" id="valor-out">50 €</span>
+        </div>
+        <p class="etf-hint">Começar com pouco está perfeitamente bem. A consistência vale mais que o valor.</p>
+      </div>
+
+      <div id="perfil-resultado" class="etf-hidden" style="margin-top: 1.25rem; padding-top: 1rem; border-top: 0.5px solid var(--color-border-tertiary);">
+        <p class="etf-section-title">O teu perfil</p>
+        <div class="etf-grid-2">
+          <div class="etf-metric">
+            <p class="etf-metric-label">Tipo de investidor</p>
+            <p class="etf-metric-value" id="m-tipo" style="font-size: 16px;">—</p>
+          </div>
+          <div class="etf-metric">
+            <p class="etf-metric-label">Estratégia sugerida</p>
+            <p class="etf-metric-value" id="m-estrategia" style="font-size: 16px;">—</p>
+          </div>
+        </div>
+        <div class="etf-actions">
+          <button class="etf-action-btn" onclick="goTab('portfolio')">Ver portfólio sugerido <i class="ti ti-arrow-right" aria-hidden="true"></i></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: PORTFOLIO -->
+  <div id="tab-portfolio" class="etf-tab-content etf-hidden">
+    <div class="etf-card">
+      <p class="etf-section-title">Alocação sugerida</p>
+      <p class="etf-hint" id="p-descricao">Completa o perfil primeiro para ver a tua alocação personalizada.</p>
+
+      <div id="p-content" class="etf-hidden" style="margin-top: 1rem;">
+        <div class="etf-bar" id="p-bar"></div>
+        <div class="etf-legend" id="p-legend"></div>
+
+        <p class="etf-section-title" style="margin-top: 1.5rem;">ETFs comuns nesta categoria</p>
+        <div id="p-etfs"></div>
+
+        <div class="etf-disclaimer">
+          <i class="ti ti-info-circle" aria-hidden="true"></i> Estes nomes são apenas exemplos populares para fins educativos — não constituem recomendação. Pesquisa sempre o TER, domicílio fiscal e disponibilidade na tua corretora.
+        </div>
+
+        <div class="etf-actions">
+          <button class="etf-action-btn" onclick="goTab('simulador')">Simular crescimento <i class="ti ti-arrow-right" aria-hidden="true"></i></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: SIMULADOR -->
+  <div id="tab-simulador" class="etf-tab-content etf-hidden">
+    <div class="etf-card">
+      <p class="etf-section-title">Simulador DCA (investir todos os meses)</p>
+      <p class="etf-hint">Vê quanto pode crescer o teu património ao longo do tempo. Os retornos são estimativas baseadas em médias históricas — o passado não garante o futuro.</p>
+
+      <div style="margin-top: 1rem;">
+        <div class="etf-row">
+          <label>Valor mensal</label>
+          <input type="range" id="s-mes" min="10" max="500" step="10" value="50" />
+          <span class="out" id="s-mes-out">50 €</span>
+        </div>
+        <div class="etf-row">
+          <label>Anos a investir</label>
+          <input type="range" id="s-anos" min="1" max="40" step="1" value="20" />
+          <span class="out" id="s-anos-out">20 anos</span>
+        </div>
+        <div class="etf-row">
+          <label>Retorno anual</label>
+          <input type="range" id="s-retorno" min="2" max="10" step="0.5" value="7" />
+          <span class="out" id="s-retorno-out">7,0%</span>
+        </div>
+      </div>
+
+      <div class="etf-grid-2" style="margin-top: 1rem;">
+        <div class="etf-metric">
+          <p class="etf-metric-label">Total investido</p>
+          <p class="etf-metric-value" id="s-investido">12 000 €</p>
+        </div>
+        <div class="etf-metric">
+          <p class="etf-metric-label">Valor final estimado</p>
+          <p class="etf-metric-value" id="s-final" style="color: var(--color-text-success);">26 005 €</p>
+        </div>
+        <div class="etf-metric">
+          <p class="etf-metric-label">Lucro estimado</p>
+          <p class="etf-metric-value" id="s-lucro">14 005 €</p>
+        </div>
+        <div class="etf-metric">
+          <p class="etf-metric-label">Multiplicador</p>
+          <p class="etf-metric-value" id="s-mult">2,2×</p>
+        </div>
+      </div>
+
+      <div style="margin-top: 1.25rem; position: relative; height: 200px;">
+        <canvas id="s-chart"></canvas>
+      </div>
+
+      <div class="etf-actions">
+        <button class="etf-action-btn" onclick="sendPrompt('Explica-me como funciona o efeito de juros compostos com um exemplo prático.')">Explicar juros compostos ↗</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: ROADMAP -->
+  <div id="tab-roadmap" class="etf-tab-content etf-hidden">
+    <div class="etf-card">
+      <p class="etf-section-title">O teu plano em 6 passos</p>
+      <p class="etf-hint">Marca cada passo à medida que avanças. Não há pressa — vai ao teu ritmo.</p>
+
+      <div id="roadmap-list" style="margin-top: 1rem;"></div>
+
+      <div class="etf-actions">
+        <button class="etf-action-btn" onclick="resetRoadmap()"><i class="ti ti-refresh" aria-hidden="true"></i> Reiniciar progresso</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: COACH -->
+  <div id="tab-coach" class="etf-tab-content etf-hidden">
+    <div class="etf-card">
+      <p class="etf-section-title">Pergunta ao coach</p>
+      <p class="etf-hint">Toca numa pergunta para eu responder em detalhe, ou escreve no chat.</p>
+
+      <div style="display: grid; gap: 6px; margin-top: 1rem;" id="coach-questions"></div>
+    </div>
+  </div>
+
+  <p class="etf-hint" style="text-align: center; margin-top: 1rem;">⚠️ App educativa. Não substitui consultoria financeira profissional.</p>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+(function() {
+  const state = {
+    conhecimento: null,
+    horizonte: null,
+    risco: null,
+    valorMes: 50,
+    roadmap: [false, false, false, false, false, false]
+  };
+
+  // === Tabs ===
+  function goTab(name) {
+    document.querySelectorAll('.etf-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+    document.querySelectorAll('.etf-tab-content').forEach(c => c.classList.toggle('etf-hidden', c.id !== 'tab-' + name));
+  }
+  window.goTab = goTab;
+  document.querySelectorAll('.etf-tab').forEach(t => t.addEventListener('click', () => goTab(t.dataset.tab)));
+
+  // === Perfil: opções ===
+  document.querySelectorAll('.etf-options').forEach(group => {
+    group.addEventListener('click', e => {
+      const btn = e.target.closest('.etf-opt');
+      if (!btn) return;
+      const q = group.dataset.q;
+      group.querySelectorAll('.etf-opt').forEach(o => o.classList.remove('selected'));
+      btn.classList.add('selected');
+      state[q] = btn.dataset.val;
+      checkPerfil();
+    });
+  });
+
+  // Slider valor mensal
+  const valorMes = document.getElementById('valor-mes');
+  const valorOut = document.getElementById('valor-out');
+  valorMes.addEventListener('input', () => {
+    state.valorMes = parseInt(valorMes.value);
+    valorOut.textContent = state.valorMes + ' €';
+    document.getElementById('s-mes').value = state.valorMes;
+    document.getElementById('s-mes-out').textContent = state.valorMes + ' €';
+    updateSim();
+    checkPerfil();
+  });
+
+  function checkPerfil() {
+    if (state.conhecimento && state.horizonte && state.risco) {
+      const tipo = getTipo();
+      document.getElementById('m-tipo').textContent = tipo.label;
+      document.getElementById('m-estrategia').textContent = tipo.estrategia;
+      document.getElementById('perfil-resultado').classList.remove('etf-hidden');
+      renderPortfolio();
+    }
+  }
+
+  function getTipo() {
+    // Lógica simples de combinação horizonte + risco
+    if (state.horizonte === 'curto') {
+      return { label: 'Conservador', estrategia: 'Preservação', key: 'conservador' };
+    }
+    if (state.horizonte === 'longo' && state.risco === 'alta') {
+      return { label: 'Crescimento', estrategia: 'Ações globais', key: 'crescimento' };
+    }
+    if (state.horizonte === 'longo') {
+      return { label: 'Equilibrado-longo', estrategia: 'Buy & Hold', key: 'equilibrado-longo' };
+    }
+    if (state.risco === 'baixa') {
+      return { label: 'Cauteloso', estrategia: 'Maioria obrigações', key: 'cauteloso' };
+    }
+    return { label: 'Equilibrado', estrategia: '60/40 misto', key: 'equilibrado' };
+  }
+
+  // === Portfolio ===
+  const portfolios = {
+    'conservador': {
+      desc: 'Curto prazo: o objetivo é preservar o capital. Pouca volatilidade, retornos modestos.',
+      aloc: [{ nome: 'Mercado monetário', pct: 60, cor: '#378ADD' }, { nome: 'Obrigações curto prazo', pct: 30, cor: '#85B7EB' }, { nome: 'Ações globais', pct: 10, cor: '#1D9E75' }],
+      etfs: [{ nome: 'XEON', desc: 'Mercado monetário euro' }, { nome: 'IB01', desc: 'Treasuries USA 0-1y' }]
+    },
+    'cauteloso': {
+      desc: 'Equilíbrio com forte preferência por estabilidade. Mais obrigações que ações.',
+      aloc: [{ nome: 'Obrigações globais', pct: 60, cor: '#378ADD' }, { nome: 'Ações globais', pct: 40, cor: '#1D9E75' }],
+      etfs: [{ nome: 'AGGH', desc: 'Obrigações globais agregadas' }, { nome: 'VWCE', desc: 'Ações mundo (FTSE All-World)' }]
+    },
+    'equilibrado': {
+      desc: 'Médio prazo: misto clássico 60/40. Equilibra crescimento e proteção.',
+      aloc: [{ nome: 'Ações globais', pct: 60, cor: '#1D9E75' }, { nome: 'Obrigações globais', pct: 40, cor: '#378ADD' }],
+      etfs: [{ nome: 'VWCE', desc: 'Ações mundo (FTSE All-World)' }, { nome: 'AGGH', desc: 'Obrigações globais agregadas' }]
+    },
+    'equilibrado-longo': {
+      desc: 'Longo prazo com prudência: maioria em ações, mas com almofada de obrigações.',
+      aloc: [{ nome: 'Ações globais', pct: 80, cor: '#1D9E75' }, { nome: 'Obrigações globais', pct: 20, cor: '#378ADD' }],
+      etfs: [{ nome: 'VWCE', desc: 'Ações mundo (FTSE All-World)' }, { nome: 'IWDA', desc: 'MSCI World (mercados desenvolvidos)' }, { nome: 'AGGH', desc: 'Obrigações globais agregadas' }]
+    },
+    'crescimento': {
+      desc: 'Longo prazo agressivo: 100% ações, foco em crescimento via efeito composto.',
+      aloc: [{ nome: 'Ações globais', pct: 100, cor: '#1D9E75' }],
+      etfs: [{ nome: 'VWCE', desc: 'Ações mundo (FTSE All-World)' }, { nome: 'IWDA + EIMI', desc: 'Desenvolvidos + emergentes' }, { nome: 'CSPX', desc: 'S&P 500 (acumulação)' }]
+    }
+  };
+
+  function renderPortfolio() {
+    const tipo = getTipo();
+    const p = portfolios[tipo.key];
+    document.getElementById('p-descricao').textContent = p.desc;
+    document.getElementById('p-content').classList.remove('etf-hidden');
+
+    const bar = document.getElementById('p-bar');
+    bar.innerHTML = '';
+    const legend = document.getElementById('p-legend');
+    legend.innerHTML = '';
+    p.aloc.forEach(a => {
+      const seg = document.createElement('div');
+      seg.className = 'etf-bar-seg';
+      seg.style.cssText = 'background:' + a.cor + '; flex:' + a.pct + ';';
+      seg.textContent = a.pct + '%';
+      bar.appendChild(seg);
+
+      const li = document.createElement('span');
+      li.innerHTML = '<span class="etf-legend-dot" style="background:' + a.cor + '"></span>' + a.nome + ' (' + a.pct + '%)';
+      legend.appendChild(li);
+    });
+
+    const etfsDiv = document.getElementById('p-etfs');
+    etfsDiv.innerHTML = '';
+    p.etfs.forEach(e => {
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex; justify-content:space-between; align-items:center; padding:10px 12px; background: var(--color-background-secondary); border-radius: var(--border-radius-md); margin-bottom: 6px; font-size: 13px;';
+      row.innerHTML = '<span style="font-weight:500">' + e.nome + '</span><span style="color: var(--color-text-secondary)">' + e.desc + '</span>';
+      etfsDiv.appendChild(row);
+    });
+  }
+
+  // === Simulador ===
+  let chart = null;
+  function updateSim() {
+    const m = parseInt(document.getElementById('s-mes').value);
+    const a = parseInt(document.getElementById('s-anos').value);
+    const r = parseFloat(document.getElementById('s-retorno').value);
+    document.getElementById('s-mes-out').textContent = m + ' €';
+    document.getElementById('s-anos-out').textContent = a + (a === 1 ? ' ano' : ' anos');
+    document.getElementById('s-retorno-out').textContent = r.toFixed(1).replace('.', ',') + '%';
+
+    const monthlyR = r / 100 / 12;
+    const months = a * 12;
+    const investido = m * months;
+    let final = 0;
+    const labels = [];
+    const investedSeries = [];
+    const finalSeries = [];
+    for (let i = 1; i <= months; i++) {
+      final = (final + m) * (1 + monthlyR);
+      if (i % 12 === 0) {
+        labels.push('Ano ' + (i / 12));
+        investedSeries.push(Math.round(m * i));
+        finalSeries.push(Math.round(final));
+      }
+    }
+    final = Math.round(final);
+    const lucro = final - investido;
+    const fmt = n => Math.round(n).toLocaleString('pt-PT') + ' €';
+    document.getElementById('s-investido').textContent = fmt(investido);
+    document.getElementById('s-final').textContent = fmt(final);
+    document.getElementById('s-lucro').textContent = fmt(lucro);
+    document.getElementById('s-mult').textContent = (final / investido).toFixed(1).replace('.', ',') + '×';
+
+    if (chart) chart.destroy();
+    const ctx = document.getElementById('s-chart');
+    if (!ctx) return;
+    chart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [
+          { label: 'Investido', data: investedSeries, borderColor: '#888780', backgroundColor: 'rgba(136,135,128,0.1)', fill: true, tension: 0.3, pointRadius: 0 },
+          { label: 'Valor final', data: finalSeries, borderColor: '#1D9E75', backgroundColor: 'rgba(29,158,117,0.15)', fill: true, tension: 0.3, pointRadius: 0 }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } },
+        scales: {
+          x: { grid: { display: false }, ticks: { font: { size: 10 }, maxTicksLimit: 8 } },
+          y: { grid: { color: 'rgba(128,128,128,0.1)' }, ticks: { font: { size: 10 }, callback: v => Math.round(v / 1000) + 'k' } }
+        }
+      }
+    });
+  }
+  ['s-mes', 's-anos', 's-retorno'].forEach(id => {
+    document.getElementById(id).addEventListener('input', updateSim);
+  });
+
+  // === Roadmap ===
+  const steps = [
+    { titulo: 'Construir fundo de emergência', desc: 'Junta 3 meses de despesas numa conta separada antes de investir.' },
+    { titulo: 'Definir objetivo e horizonte', desc: 'Para que serve este dinheiro? Quando vais precisar dele?' },
+    { titulo: 'Escolher uma corretora', desc: 'Compara comissões, TER e fiabilidade. Ex: Trading 212, Degiro, XTB.' },
+    { titulo: 'Comprar o primeiro ETF', desc: 'Começa pequeno. Um ETF global como VWCE é um ponto de partida comum.' },
+    { titulo: 'Automatizar o DCA', desc: 'Configura compras mensais automáticas. Remove emoção da equação.' },
+    { titulo: 'Rever 1 vez por ano', desc: 'Rebalancear se necessário. Não mexer mais que isso.' }
+  ];
+
+  function renderRoadmap() {
+    const list = document.getElementById('roadmap-list');
+    list.innerHTML = '';
+    steps.forEach((s, i) => {
+      const div = document.createElement('div');
+      div.className = 'etf-step';
+      div.style.cursor = 'pointer';
+      const numStyle = state.roadmap[i] ? 'background: var(--color-background-success); color: var(--color-text-success);' : '';
+      const checkIcon = state.roadmap[i] ? '<i class="ti ti-check" aria-hidden="true"></i>' : (i + 1);
+      div.innerHTML = '<div class="etf-step-num" style="' + numStyle + '">' + checkIcon + '</div>' +
+        '<div class="etf-step-content"><h4>' + s.titulo + '</h4><p>' + s.desc + '</p></div>';
+      div.addEventListener('click', () => {
+        state.roadmap[i] = !state.roadmap[i];
+        renderRoadmap();
+      });
+      list.appendChild(div);
+    });
+  }
+  function resetRoadmap() {
+    state.roadmap = [false, false, false, false, false, false];
+    renderRoadmap();
+  }
+  window.resetRoadmap = resetRoadmap;
+
+  // === Coach ===
+  const questions = [
+    'O que é o TER de um ETF e porque é importante?',
+    'Como escolho entre VWCE, IWDA e CSPX?',
+    'Qual a diferença entre ETF de acumulação e de distribuição?',
+    'Como funcionam os impostos sobre ETFs em Portugal?',
+    'O que é rebalanceamento e quando devo fazê-lo?',
+    'Devo investir tudo de uma vez ou aos poucos (DCA)?',
+    'O que faço se o mercado cair 30%?',
+    'Como abrir conta numa corretora passo a passo?'
+  ];
+  const cq = document.getElementById('coach-questions');
+  questions.forEach(q => {
+    const b = document.createElement('button');
+    b.className = 'etf-action-btn';
+    b.style.cssText = 'text-align:left; padding: 10px 12px; font-size:13px;';
+    b.textContent = q + ' ↗';
+    b.addEventListener('click', () => sendPrompt(q));
+    cq.appendChild(b);
+  });
+
+  // Init
+  updateSim();
+  renderRoadmap();
+})();
+</script>
